@@ -21,18 +21,35 @@ The external API described in the assignment is **mocked using a local JSON file
 
 ---
 
-# Project Structure
+## Project Structure
 
-src/
-TransactionIngest/
-Data/
-Models/
-Services/
-Mock/
-Program.cs
+```text
+├── src/
+│   └── TransactionIngest/
+│       ├── Configuration/
+│       ├── Data/
+│       ├── DTOs/
+│       ├── Enums/
+│       ├── Migrations/
+│       ├── Mock/
+│       ├── Models/
+│       ├── Services/
+│       ├── Program.cs
+│       ├── appsettings.json
+│       └── TransactionIngest.csproj
+│
+├── tests/
+│   └── TransactionIngest.Tests/
+│       ├── Fakes/
+│       ├── TransactionIngestionServiceTests.cs
+│       ├── UnitTest1.cs
+│       └── TransactionIngest.Tests.csproj
+│
+├── TransactionIngest.slnx
+├── README.md
+└── .gitignore
 
-tests/
-TransactionIngest.Tests/
+```
 
 
 - **src** contains the main application code and database configuration.  
@@ -67,7 +84,6 @@ Running the program multiple times with the same input **does not create duplica
 
 From the repository root:
 
-```bash
 dotnet restore
 dotnet build
 dotnet run --project src/TransactionIngest
@@ -91,7 +107,10 @@ revoking missing transactions
 ensuring repeated runs with unchanged input do not cause additional changes
 
 
-Configuration
+
+---
+
+# Configuration
 
 Configuration is stored in:
 
@@ -103,7 +122,12 @@ database connection string
 
 location of the mocked transaction feed
 
-Assumptions
+---
+
+
+
+
+# Assumptions
 
 Some assumptions were made while implementing the solution:
 
@@ -115,7 +139,12 @@ The transaction feed is represented by a local JSON file instead of a real API.
 
 Transactions older than 24 hours are not modified by the revocation logic.
 
-Notes
+
+---
+
+
+
+# Notes
 
 This project was implemented as a console application to keep the solution simple and focused on the ingestion logic.
 
