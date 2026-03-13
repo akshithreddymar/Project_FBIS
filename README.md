@@ -107,6 +107,18 @@ revoking missing transactions
 ensuring repeated runs with unchanged input do not cause additional changes
 
 
+## Manual Database Verification
+
+After running the application, you can inspect the SQLite database manually.
+
+```bash
+sqlite3 transactions.db
+.tables
+SELECT TransactionId, ProductName, Amount, Status FROM Transactions;
+SELECT TransactionId, ActionType FROM TransactionAudits ORDER BY Id;
+.quit
+
+```
 
 ---
 
