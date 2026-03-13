@@ -33,3 +33,4 @@ var result = await ingestionService.ProcessSnapshotAsync();
 
 Console.WriteLine($"Inserted {result.InsertedCount} new transactions.");
 Console.WriteLine($"Updated {result.UpdatedCount} existing transactions.");
+Console.WriteLine($"Revoked {result.RevokedCount} missing transactions.");

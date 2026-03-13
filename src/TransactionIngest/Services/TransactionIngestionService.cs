@@ -37,6 +37,7 @@ public class TransactionIngestionService
         var utcNow = DateTime.UtcNow;
         var insertedCount = 0;
         var updatedCount = 0;
+        var revokedCount = 0;
 
         foreach (var item in snapshotItems)
         {
@@ -127,6 +128,14 @@ public class TransactionIngestionService
                 existingTransaction.TransactionTimeUtc = item.Timestamp;
             }
 
+            if (existingTransaction.Status == TransactionStatus.Revoked)
+            {
+                changedFields.Add(nameof(existingTransaction.Status));
+                oldValues[nameof(existingTransaction.Status)] = existingTransaction.Status.ToString();
+                newValues[nameof(existingTransaction.Status)] = TransactionStatus.Active.ToString();
+                existingTransaction.Status = TransactionStatus.Active;
+            }
+
             existingTransaction.LastSeenInSnapshotUtc = utcNow;
 
             if (changedFields.Count == 0)
@@ -150,9 +159,46 @@ public class TransactionIngestionService
             updatedCount++;
         }
 
+        var revocationThreshold = utcNow.AddHours(-24);
+
+        var transactionsToRevoke = await _dbContext.Transactions
+            .Where(t =>
+                t.TransactionTimeUtc >= revocationThreshold &&
+                t.Status != TransactionStatus.Revoked &&
+                t.Status != TransactionStatus.Finalized &&
+                !snapshotTransactionIds.Contains(t.TransactionId))
+            .ToListAsync(cancellationToken);
+
+        foreach (var transaction in transactionsToRevoke)
+        {
+            var oldStatus = transaction.Status;
+
+            transaction.Status = TransactionStatus.Revoked;
+            transaction.UpdatedAtUtc = utcNow;
+
+            var revokeAudit = new TransactionAudit
+            {
+                TransactionId = transaction.TransactionId,
+                ActionType = "Revoked",
+                ChangedAtUtc = utcNow,
+                ChangedFields = JsonSerializer.Serialize(new[] { nameof(transaction.Status) }),
+                OldValues = JsonSerializer.Serialize(new
+                {
+                    Status = oldStatus.ToString()
+                }),
+                NewValues = JsonSerializer.Serialize(new
+                {
+                    Status = TransactionStatus.Revoked.ToString()
+                })
+            };
+
+            _dbContext.TransactionAudits.Add(revokeAudit);
+            revokedCount++;
+        }
+
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        return new SnapshotProcessResult(insertedCount, updatedCount);
+        return new SnapshotProcessResult(insertedCount, updatedCount, revokedCount);
     }
 
     private static string GetLast4(string cardNumber)
@@ -168,4 +214,4 @@ public class TransactionIngestionService
     }
 }
 
-public record SnapshotProcessResult(int InsertedCount, int UpdatedCount);
+public record SnapshotProcessResult(int InsertedCount, int UpdatedCount, int RevokedCount);
