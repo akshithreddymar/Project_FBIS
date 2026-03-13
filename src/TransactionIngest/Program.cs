@@ -29,6 +29,7 @@ var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 await dbContext.Database.MigrateAsync();
 
 var ingestionService = scope.ServiceProvider.GetRequiredService<TransactionIngestionService>();
-var insertedCount = await ingestionService.ProcessSnapshotAsync();
+var result = await ingestionService.ProcessSnapshotAsync();
 
-Console.WriteLine($"Inserted {insertedCount} new transactions.");
+Console.WriteLine($"Inserted {result.InsertedCount} new transactions.");
+Console.WriteLine($"Updated {result.UpdatedCount} existing transactions.");
